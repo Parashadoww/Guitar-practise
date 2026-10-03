@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="可离线使用的吉他指板与和弦练习工具，支持21、22、24品、音名唱名切换和声音试听。">
+<title>吉他指板练习室</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --icon-size: 16px;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --corner-shape: round;
+  --radius: var(--border-radius-lg, 10px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: var(--visualize-paint-gutter, 0px);
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+.cursor-interaction {
+  cursor: var(--cursor-interaction, pointer);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: var(--cursor-interaction, pointer);
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive > .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align="right"]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align="center"]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: var(--corner-shape);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+.widget {
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  box-shadow: 0 0 0 0.5px var(--border-strong, var(--border));
+  color: var(--foreground);
+  background: var(--background);
+}
+
+#widget > :not(.card, .widget, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  margin-block: 6px;
+  border: 0;
+  background: var(--border);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress {
+  display: flex;
+  height: 8px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 8px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar:only-child {
+  border-radius: var(--radius-full);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.nav-link,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn,
+.nav-link {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: var(--cursor-interaction, pointer);
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover,
+.nav-link:not(:disabled):not([aria-disabled="true"]):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.nav-pills .nav-link {
+  min-width: 0;
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.nav-justified .nav-link {
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+/* Shared preview chrome; product styles stay inside each variant. */
+.viz-dotted-background {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--foreground) 14%, transparent) 0.8px,
+    transparent 0.8px
+  );
+  background-position: center;
+  background-size: 16px 16px;
+}
+
+.viz-carousel {
+  position: relative;
+  min-width: 0;
+}
+
+.viz-carousel:has(> .viz-carousel-controls) {
+  min-height: calc(60px + var(--viz-carousel-picker-height, 0px));
+  padding-bottom: 60px;
+}
+
+.viz-carousel > [data-variant][hidden] {
+  display: none !important;
+}
+
+.viz-carousel > [data-variant] {
+  isolation: isolate;
+}
+
+.viz-carousel-controls {
+  --viz-carousel-hover: light-dark(
+    color-mix(in srgb, var(--foreground) 5.4%, transparent),
+    color-mix(in srgb, var(--foreground) 7.8%, transparent)
+  );
+  position: absolute;
+  z-index: 2;
+  bottom: 8px;
+  left: 50%;
+  display: flex;
+  width: max-content;
+  /* Leave room for the host's design-controls launcher at the trailing edge. */
+  max-width: calc(100% - 96px);
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  /* Match the settings dropdown chrome independently of the content font size. */
+  font-size: 13px;
+  font-weight: var(--font-weight-normal);
+  line-height: 18px;
+  transform: translateX(-50%);
+  user-select: none;
+}
+
+.viz-carousel-controls button,
+.viz-carousel-picker > summary {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 6px;
+  -webkit-app-region: no-drag;
+  border: 0;
+  border-radius: 14px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viz-carousel-controls > button,
+.viz-carousel-picker > summary {
+  position: relative;
+  isolation: isolate;
+}
+
+.viz-carousel-controls > button {
+  --icon-size: 16px;
+  width: 30px;
+  padding: 0;
+}
+
+.viz-carousel-picker > summary {
+  padding-inline: 12px;
+}
+
+.viz-carousel-controls .viz-carousel-caret {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin: 0;
+  color: inherit;
+  transform: rotate(180deg);
+}
+
+.viz-carousel-controls > button > svg,
+.viz-carousel-controls .viz-carousel-caret,
+.viz-carousel-count {
+  opacity: 0.5;
+}
+
+.viz-carousel-controls > button::before,
+.viz-carousel-picker > summary::before {
+  position: absolute;
+  z-index: -1;
+  inset: 3px;
+  border-radius: 12px;
+  content: "";
+  pointer-events: none;
+}
+
+.viz-carousel-controls > button:hover::before,
+.viz-carousel-picker > summary:hover::before {
+  background: var(--viz-carousel-hover);
+}
+
+.viz-carousel-controls > button,
+.viz-carousel-controls [data-lucide],
+.viz-carousel-controls .lucide {
+  flex-shrink: 0;
+}
+
+.viz-carousel-picker {
+  min-width: 0;
+}
+
+.viz-carousel-picker > summary {
+  min-width: 0;
+  list-style: none;
+}
+
+.viz-carousel-picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.viz-carousel-count {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.viz-carousel-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viz-carousel-options {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  max-height: 240px;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  box-shadow: 0 4px 12px light-dark(rgb(0 0 0 / 6%), rgb(0 0 0 / 25%));
+}
+
+.viz-carousel-options > button {
+  width: 100%;
+  min-height: 28px;
+  justify-content: flex-start;
+  padding: 4px 8px;
+  font-size: var(--font-size-small);
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.viz-carousel-options > [aria-current="true"],
+.viz-carousel-options > button:hover {
+  background: var(--viz-carousel-hover);
+}
+
+.btn:disabled,
+.nav-link:disabled,
+.nav-link[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: var(--corner-shape);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed="true"],
+  [aria-selected="true"],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible,
+.viz-carousel-controls :is(button, summary):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .viz-carousel:has(> .viz-carousel-controls) {
+    min-height: calc(76px + var(--viz-carousel-picker-height, 0px));
+    padding-bottom: 76px;
+  }
+
+  .btn,
+  .nav-link,
+  .viz-carousel-controls button,
+  .viz-carousel-picker > summary,
+  .form-control,
+  .form-select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Keep small-screen WebKit from zooming when a text field receives focus. */
+  .form-control,
+  .form-select {
+    font-size: max(16px, var(--font-size-normal));
+  }
+
+  .form-control[type="file"]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type="color"] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: "";
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 44px;
+  }
+
+  .form-range::-moz-range-track {
+    height: 44px;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    margin-top: 12px;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+main{padding:16px} #guitar-map .gm-detail{overflow-wrap:anywhere} #guitar-map .gm-chord svg text{font-size:13px}
+</style>
+</head>
+<body><main><div id="guitar-map">
+  <h2>吉他指板练习室</h2>
+  <div class="text-small">标准调弦 E A D G B E · 点击音位发声 · 合成拨弦音色</div>
+  <div class="viz-controls" style="margin-top:16px">
+    <label class="form-check"><input id="gm-sound" class="form-check-input" type="checkbox" checked><span class="form-check-label">点击发声</span></label>
+    <label class="form-label" for="gm-volume">音量 <span id="gm-volume-label">35%</span><input id="gm-volume" class="form-range" type="range" min="0" max="100" value="35"></label>
+    <button class="btn" id="gm-stop" type="button">停止声音</button>
+  </div>
+  <div id="gm-audio-status" class="text-small" aria-live="polite">点击任意音位或和弦试听按钮开始。</div>
+  <div class="viz-controls">
+    <label class="form-label">指板品数<select class="form-select" id="gm-frets"><option value="21">21品 · 适配你的吉他</option><option value="22">22品</option><option value="24">24品</option></select></label>
+    <label class="form-label">参照调<select class="form-select" id="gm-key"><option value="0">C大调 · C是do</option><option value="7">G大调 · G是do</option><option value="9">A大调 · A是do</option></select></label>
+    <label class="form-label">格内显示<select class="form-select" id="gm-label"><option value="note">固定音名</option><option value="degree">当前调的唱名</option></select></label>
+  </div>
+  <div id="gm-selection" class="gm-detail" aria-live="polite"></div>
+  <div id="gm-board"></div>
+  <div class="viz-row text-small gm-legend"><span><i class="gm-root"></i>● 当前调的do</span><span><i class="gm-scale"></i>调内音</span><span>♯＝升半音 · C♯与D♭等音</span></div>
+  <div class="text-small">上方1弦最细，下方6弦最粗 · 0＝空弦 · 第12品比空弦高一个八度</div>
+  <hr>
+  <h2>和弦按法对照</h2>
+  <div class="viz-controls"><label class="form-label">和弦组<select class="form-select" id="gm-family"><option value="special">常见变化和弦 · 12种</option><option value="basic">基础和弦 · 9种</option></select></label></div>
+  <div class="text-small">和弦图从左到右：6 → 1弦（粗 → 细） · ●＝按弦 · ○＝空弦 · ×＝不弹 · 数字串＝6至1弦的品位</div>
+  <div id="gm-chords"></div>
+</div>
+<style>
+#guitar-map{color:var(--foreground)}
+#guitar-map .gm-detail{margin:16px 0;min-height:3em}
+#guitar-map .gm-board-wrap{overflow-x:auto;margin:12px 0 20px}
+#guitar-map .gm-neck{display:grid;grid-template-columns:70px repeat(13,minmax(42px,1fr));min-width:616px;gap:2px;align-items:center}
+#guitar-map .gm-neck.second{grid-template-columns:70px repeat(12,minmax(42px,1fr));min-width:574px}
+#guitar-map .gm-fret{text-align:center;padding:5px 0;color:var(--muted-foreground)}
+#guitar-map .gm-string{white-space:nowrap}
+#guitar-map .gm-note{background:color-mix(in srgb,var(--viz-series-1) 12%,transparent)}
+#guitar-map .gm-tonic{background:color-mix(in srgb,var(--viz-series-1) 28%,transparent)}
+#guitar-map .gm-out{opacity:.7}
+#guitar-map .gm-legend{margin-bottom:10px}
+#guitar-map .gm-legend i{display:inline-block;width:12px;height:12px;margin-right:5px;background:color-mix(in srgb,var(--viz-series-1) 12%,transparent)}
+#guitar-map .gm-legend i.gm-root{background:color-mix(in srgb,var(--viz-series-1) 28%,transparent)}
+#guitar-map #gm-chords{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:24px 20px;margin-top:20px}
+#guitar-map .gm-chord{min-width:0}
+#guitar-map .gm-chord h3{margin:0 0 5px}
+#guitar-map .gm-chord svg{display:block;width:160px;height:155px;max-width:100%;color:var(--foreground)}
+#guitar-map .gm-chord .gm-voicing{margin-top:5px}
+#guitar-map .gm-chord p{margin:4px 0}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('guitar-map');
+const soundControl=root.querySelector('#gm-sound'),volumeControl=root.querySelector('#gm-volume'),audioStatus=root.querySelector('#gm-audio-status');
+let audioContext=null,master=null,playGeneration=0;
+const sounding=new Set(),soundCache=new Map();
+function stopSound(){playGeneration++;for(const source of sounding){try{source.stop()}catch{}}sounding.clear();}
+async function playNotes(midis,spread=0,label=''){
+  stopSound();const generation=playGeneration;
+  try{
+    const AudioEngine=window.AudioContext||window.webkitAudioContext;
+    if(!AudioEngine)throw new Error('此浏览器不支持音频，请用Safari、Chrome或Edge打开。');
+    if(!audioContext){audioContext=new AudioEngine();master=audioContext.createGain();const limiter=audioContext.createDynamicsCompressor();limiter.threshold.value=-8;limiter.ratio.value=12;master.connect(limiter);limiter.connect(audioContext.destination);}
+    if(audioContext.state!=='running')await audioContext.resume();
+    if(generation!==playGeneration)return;
+    if(audioContext.state!=='running')throw new Error('声音未启用，请再次点击试听。');
+    master.gain.setValueAtTime(Number(volumeControl.value)/100,audioContext.currentTime);
+    const when=audioContext.currentTime+0.015;
+    midis.forEach((m,index)=>{
+      let buffer=soundCache.get(m);
+      if(!buffer){
+        const rate=audioContext.sampleRate,duration=2.2,frequency=440*Math.pow(2,(m-69)/12);
+        buffer=audioContext.createBuffer(1,Math.ceil(rate*duration),rate);const samples=buffer.getChannelData(0);
+        const harmonics=Math.min(8,Math.floor(rate/(2*frequency)));
+        for(let n=0;n<samples.length;n++){const t=n/rate;let value=0;for(let h=1;h<=harmonics;h++)value+=Math.sin(2*Math.PI*frequency*h*t)*Math.exp(-t*(2+h*.7))/Math.pow(h,1.6);samples[n]=value*.45*Math.min(1,t/.003)*Math.min(1,(duration-t)/.03);}
+        soundCache.set(m,buffer);
+      }
+      const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(master);sounding.add(source);source.onended=()=>{sounding.delete(source);source.disconnect()};source.start(when+index*spread);
+    });
+    audioStatus.textContent=`试听：${label} · ${midis.map(m=>`${(440*Math.pow(2,(m-69)/12)).toFixed(1)} Hz`).join(' / ')}`;
+  }catch(error){audioStatus.textContent=error.message||'声音暂时不可用，请用浏览器重新打开。';}
+}
+volumeControl.addEventListener('input',()=>{root.querySelector('#gm-volume-label').textContent=volumeControl.value+'%';if(master)master.gain.setTargetAtTime(Number(volumeControl.value)/100,audioContext.currentTime,.02)});
+soundControl.addEventListener('change',()=>{if(!soundControl.checked)stopSound()});
+root.querySelector('#gm-stop').addEventListener('click',()=>{stopSound();audioStatus.textContent='声音已停止。'});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSound()});
+const notes=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const degrees=['do','♯do','re','♯re','mi','fa','♯fa','sol','♯sol','la','♯la','si'];
+const scale=[0,2,4,5,7,9,11], open=[64,59,55,50,45,40];
+const chords={
+basic:[
+['C','C大三和弦','x32010','C · E · G','1 · 3 · 5'],
+['D','D大三和弦','xx0232','D · F♯ · A','1 · 3 · 5'],
+['E','E大三和弦','022100','E · G♯ · B','1 · 3 · 5'],
+['F','F大三和弦','133211','F · A · C','1 · 3 · 5','1品大横按'],
+['G','G大三和弦','320003','G · B · D','1 · 3 · 5'],
+['A','A大三和弦','x02220','A · C♯ · E','1 · 3 · 5'],
+['Am','A小三和弦','x02210','A · C · E','1 · ♭3 · 5'],
+['Dm','D小三和弦','xx0231','D · F · A','1 · ♭3 · 5'],
+['Em','E小三和弦','022000','E · G · B','1 · ♭3 · 5']
+],
+special:[
+['Am','m＝小三和弦','x02210','A · C · E','1 · ♭3 · 5'],
+['A7','7＝属七和弦','x02020','A · C♯ · E · G','1 · 3 · 5 · ♭7'],
+['Amaj7','maj7＝大七和弦','x02120','A · C♯ · E · G♯','1 · 3 · 5 · 7'],
+['Am7','m7＝小七和弦','x02010','A · C · E · G','1 · ♭3 · 5 · ♭7'],
+['Asus2','sus2＝二音替代三音','x02200','A · B · E','1 · 2 · 5'],
+['Asus4','sus4＝四音替代三音','x02230','A · D · E','1 · 4 · 5'],
+['Aadd9','add9＝加九音，保留三音','x02420','A · C♯ · E · B','1 · 3 · 5 · 9'],
+['A6','6＝大三和弦加六音','x02222','A · C♯ · E · F♯','1 · 3 · 5 · 6','2品小横按'],
+['Adim','dim＝减三和弦','xx7545','A · C · E♭','1 · ♭3 · ♭5','4—7品；跨度较大'],
+['Aaug','aug＝增三和弦','x03221','A · C♯ · E♯','1 · 3 · ♯5','E♯与F等音'],
+['A/C♯','A和弦，最低音为C♯','x4222x','C♯ · A · E','斜杠右侧指定低音','2品小横按'],
+['C/G','C和弦，最低音为G','332010','G · C · E','斜杠右侧指定低音']
+]};
+const fretControl=root.querySelector('#gm-frets'), keyControl=root.querySelector('#gm-key'), labelControl=root.querySelector('#gm-label'), familyControl=root.querySelector('#gm-family');
+let selected={string:5,fret:3};
+function pitch(m){return notes[m%12]+(Math.floor(m/12)-1)}
+function persist(){try{localStorage.setItem('guitar-practice-settings-v1',JSON.stringify({key:keyControl.value,label:labelControl.value,family:familyControl.value,frets:fretControl.value,selected}));}catch{}}
+function detail(){const m=open[selected.string-1]+selected.fret,d=(m%12-Number(keyControl.value)+12)%12;const equivalents=[];open.forEach((v,i)=>{const f=m-v;if(f>=0&&f<=Number(fretControl.value))equivalents.push(`${i+1}弦${f===0?'空弦':f+'品'}`)});root.querySelector('#gm-selection').textContent=`${selected.string}弦${selected.fret===0?'空弦':selected.fret+'品'}：${pitch(m)} · 当前调唱 ${degrees[d]}${scale.includes(d)?'':'（变化音）'} ｜ 同一音高：${equivalents.join('、')}`;}
+function drawBoard(){const holder=root.querySelector('#gm-board');holder.replaceChildren();[[0,12],[13,Number(fretControl.value)]].forEach(([start,end])=>{const wrap=document.createElement('div');wrap.className='gm-board-wrap';const grid=document.createElement('div');grid.className='gm-neck';grid.style.gridTemplateColumns=`70px repeat(${end-start+1},minmax(46px,1fr))`;grid.style.minWidth=`${70+(end-start+1)*48}px`;grid.setAttribute('role','group');grid.setAttribute('aria-label',`${start}至${end}品指板`);const first=document.createElement('div');first.className='text-small';first.textContent='弦 / 品 →';grid.append(first);for(let f=start;f<=end;f++){const h=document.createElement('div');h.className='gm-fret text-small';h.textContent=f===0?'0 空弦':f;grid.append(h)}open.forEach((m,i)=>{const s=document.createElement('div');s.className='gm-string text-small';s.textContent=`${i+1}弦 ${pitch(m)}`;grid.append(s);for(let f=start;f<=end;f++){const d=(m+f-Number(keyControl.value)+12)%12;const b=document.createElement('button');b.type='button';b.className='btn viz-tile '+(d===0?'gm-tonic':scale.includes(d)?'gm-note':'gm-out');b.textContent=(d===0?'●':'')+(labelControl.value==='note'?notes[(m+f)%12]:degrees[d]);b.setAttribute('aria-label',`${i+1}弦${f}品，${pitch(m+f)}，唱名${degrees[d]}`);b.setAttribute('aria-pressed',String(selected.string===i+1&&selected.fret===f));b.addEventListener('click',()=>{selected={string:i+1,fret:f};drawBoard();persist();if(soundControl.checked)void playNotes([m+f],0,pitch(m+f))});grid.append(b)}});wrap.append(grid);holder.append(wrap)});detail();}
+function diagram(ch){const frets=ch[2].split('').map(v=>v==='x'?-1:Number(v));const positive=frets.filter(v=>v>0),start=Math.max(...positive)>4?Math.min(...positive):1;let svg=`<svg viewBox="0 0 160 155" role="img" aria-label="${ch[0]}和弦，6至1弦品位${ch[2]}"><title>${ch[0]}：${ch[2]}</title>`;for(let i=0;i<6;i++)svg+=`<line x1="${35+i*21}" y1="35" x2="${35+i*21}" y2="131" stroke="var(--border)"/>`;for(let i=0;i<5;i++)svg+=`<line x1="35" y1="${35+i*24}" x2="140" y2="${35+i*24}" stroke="${i===0&&start===1?'var(--foreground)':'var(--border)'}" stroke-width="${i===0&&start===1?3:1}"/>`;svg+=`<text x="4" y="53" fill="currentColor">${start}品</text>`;frets.forEach((f,i)=>{const x=35+i*21;svg+=`<text x="${x}" y="151" text-anchor="middle" fill="currentColor">${6-i}</text>`;if(f<=0)svg+=`<text x="${x}" y="25" text-anchor="middle" fill="currentColor">${f===0?'○':'×'}</text>`;else svg+=`<circle cx="${x}" cy="${47+(f-start)*24}" r="6" fill="var(--foreground)"/>`});return svg+'</svg>';}
+function drawChords(){const holder=root.querySelector('#gm-chords');holder.innerHTML=chords[familyControl.value].map(ch=>`<div class="gm-chord"><h3>${ch[0]}</h3><div class="text-small">${ch[1]}</div>${diagram(ch)}<div class="gm-voicing"><code>${ch[2]}</code></div><p>${ch[3]}</p><div class="text-small">${ch[4]}</div>${ch[5]?`<div class="text-small">${ch[5]}</div>`:''}<div class="viz-row" style="margin-top:8px"><button type="button" class="btn" data-shape="${ch[2]}" data-chord="${ch[0]}" data-spread="0">齐奏</button><button type="button" class="btn" data-shape="${ch[2]}" data-chord="${ch[0]}" data-spread="0.18">分解</button></div></div>`).join('');holder.querySelectorAll('button[data-shape]').forEach(button=>button.addEventListener('click',()=>{const midi=button.dataset.shape.split('').flatMap((f,i)=>f==='x'?[]:[[40,45,50,55,59,64][i]+Number(f)]);void playNotes(midi,Number(button.dataset.spread),button.dataset.chord)}));}
+function restore(state){const s=state;if(!s)return;if(['21','22','24'].includes(s.frets))fretControl.value=s.frets;if(['0','7','9'].includes(s.key))keyControl.value=s.key;if(['note','degree'].includes(s.label))labelControl.value=s.label;if(['basic','special'].includes(s.family))familyControl.value=s.family;if(s.selected&&Number.isInteger(s.selected.string)&&s.selected.string>=1&&s.selected.string<=6&&Number.isInteger(s.selected.fret)&&s.selected.fret>=0&&s.selected.fret<=Number(fretControl.value))selected=s.selected;}
+try{restore(JSON.parse(localStorage.getItem('guitar-practice-settings-v1')))}catch{}drawBoard();drawChords();
+fretControl.addEventListener('change',()=>{stopSound();if(selected.fret>Number(fretControl.value))selected.fret=Number(fretControl.value);drawBoard();persist()});
+keyControl.addEventListener('change',()=>{drawBoard();persist()});labelControl.addEventListener('change',()=>{drawBoard();persist()});familyControl.addEventListener('change',()=>{drawChords();persist()});
+})();
+</script>
+
+</main></body></html>
